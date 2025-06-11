@@ -46,6 +46,12 @@ public class CarController {
         Car car = new Car();
         car.setName(request.getName());
         car.setModel(request.getModel());
+        car.setEngine_type(request.getEngine_type());
+        car.setYear(request.getYear());
+        car.setFuel_type(request.getFuel_type());
+        car.setEngine_displacement(request.getEngine_displacement());
+        car.setTransmission(request.getTransmission());
+        car.setDrive_type(request.getDrive_type());
         car.setFuelConsumption(request.getFuelConsumption());
         car.setUser(user);
         
@@ -94,6 +100,12 @@ public class CarController {
         Car car = new Car();
         car.setName(request.getName());
         car.setModel(request.getModel());
+        car.setEngine_type(request.getEngine_type());
+        car.setYear(request.getYear());
+        car.setFuel_type(request.getFuel_type());
+        car.setEngine_displacement(request.getEngine_displacement());
+        car.setTransmission(request.getTransmission());
+        car.setDrive_type(request.getDrive_type());
         car.setFuelConsumption(request.getFuelConsumption());
         return carService.updateCar(id, car);
     }

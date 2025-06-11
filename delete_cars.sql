@@ -1,0 +1,1 @@
+DELETE FROM public.cars WHERE id IN (/* Add car IDs here, e.g., 1, 2, 3 */); 

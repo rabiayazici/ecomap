@@ -29,6 +29,30 @@ public class Car {
     @Column(nullable = false)
     private String model;
     
+    @NotBlank
+    @Column(nullable = false)
+    private String engine_type;
+    
+    @NotNull
+    @Column(nullable = false)
+    private int year;
+    
+    @NotBlank
+    @Column(nullable = false)
+    private String fuel_type;
+    
+    @NotNull
+    @Column(nullable = false)
+    private double engine_displacement;
+    
+    @NotBlank
+    @Column(nullable = false)
+    private String transmission;
+    
+    @NotBlank
+    @Column(nullable = false)
+    private String drive_type;
+    
     @NotNull
     @Positive
     @Column(nullable = false)
