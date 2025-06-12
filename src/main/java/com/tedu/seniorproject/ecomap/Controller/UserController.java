@@ -45,7 +45,7 @@ public class UserController {
         ResponseEntity<?> response = userService.registerUser(user);
         if (response.getStatusCode().is2xxSuccessful()) {
             User registeredUser = (User) response.getBody();
-            String token = jwtConfig.generateToken(registeredUser.getEmail());
+            String token = jwtConfig.generateToken(registeredUser);
             
             Map<String, Object> responseBody = new HashMap<>();
             responseBody.put("user", registeredUser);
@@ -71,7 +71,7 @@ public class UserController {
         ResponseEntity<?> response = userService.loginUser(user);
         if (response.getStatusCode().is2xxSuccessful()) {
             User loggedInUser = (User) response.getBody();
-            String token = jwtConfig.generateToken(loggedInUser.getEmail());
+            String token = jwtConfig.generateToken(loggedInUser);
             
             Map<String, Object> responseBody = new HashMap<>();
             responseBody.put("user", loggedInUser);

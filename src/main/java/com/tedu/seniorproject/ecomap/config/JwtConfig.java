@@ -3,15 +3,15 @@ package com.tedu.seniorproject.ecomap.config;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,81 +21,79 @@ import java.util.function.Function;
 public class JwtConfig {
     private static final Logger logger = LoggerFactory.getLogger(JwtConfig.class);
 
-    @Value("${jwt.secret:defaultSecretKey0123456789012345678901234567890}")
-    private String secret;
+    @Value("${jwt.secret}")
+    private String secretKey;
 
-    @Value("${jwt.expiration:2592000000}") // 30 days in milliseconds
+    @Value("${jwt.expiration}")
     private long expiration;
 
-    private SecretKey getSigningKey() {
+    public String extractEmail(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    public String generateToken(UserDetails userDetails) {
+        return generateToken(new HashMap<>(), userDetails);
+    }
+
+    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         try {
-            // Convert hex string to byte array
-            byte[] keyBytes = new byte[secret.length() / 2];
-            for (int i = 0; i < keyBytes.length; i++) {
-                int index = i * 2;
-                keyBytes[i] = (byte) Integer.parseInt(secret.substring(index, index + 2), 16);
-            }
-            return Keys.hmacShaKeyFor(keyBytes);
+            String token = Jwts
+                    .builder()
+                    .setClaims(extraClaims)
+                    .setSubject(userDetails.getUsername())
+                    .setIssuedAt(new Date(System.currentTimeMillis()))
+                    .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                    .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+                    .compact();
+            logger.debug("Generated token for user: {}", userDetails.getUsername());
+            return token;
         } catch (Exception e) {
-            logger.error("Error creating signing key: {}", e.getMessage());
-            throw new RuntimeException("Error creating signing key", e);
+            logger.error("Error generating token: {}", e.getMessage());
+            throw e;
         }
     }
 
-    public String generateToken(String email) {
-        Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, email);
-    }
-
-    private String createToken(Map<String, Object> claims, String subject) {
-        SecretKey key = getSigningKey();
-        logger.debug("Creating token for subject: {}", subject);
-        logger.debug("Using secret key: {}", Base64.getEncoder().encodeToString(key.getEncoded()));
-        
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-    }
-
-    public Boolean validateToken(String token) {
+    public boolean validateToken(String token) {
         try {
-            return !isTokenExpired(token);
+            Jwts.parserBuilder()
+                .setSigningKey(getSignInKey())
+                .build()
+                .parseClaimsJws(token);
+            logger.debug("Token validated successfully");
+            return true;
         } catch (Exception e) {
             logger.error("Token validation failed: {}", e.getMessage());
             return false;
         }
     }
 
-    public String extractEmail(String token) {
-        return extractClaim(token, Claims::getSubject);
-    }
-
-    private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
-    }
-
-    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
-    }
-
     private Claims extractAllClaims(String token) {
-        SecretKey key = getSigningKey();
-        logger.debug("Extracting claims from token");
-        logger.debug("Using secret key: {}", Base64.getEncoder().encodeToString(key.getEncoded()));
-        
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        try {
+            return Jwts
+                    .parserBuilder()
+                    .setSigningKey(getSignInKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (Exception e) {
+            logger.error("Error extracting claims: {}", e.getMessage());
+            throw e;
+        }
     }
 
-    private Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+    private Key getSignInKey() {
+        try {
+            byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+            logger.debug("Secret key length: {} bytes", keyBytes.length);
+            return Keys.hmacShaKeyFor(keyBytes);
+        } catch (Exception e) {
+            logger.error("Error creating signing key: {}", e.getMessage());
+            throw e;
+        }
     }
 } 
