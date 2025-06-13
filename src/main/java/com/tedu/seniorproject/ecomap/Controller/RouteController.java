@@ -11,10 +11,14 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 @RestController
 @RequestMapping("/api/routes")
@@ -149,5 +153,30 @@ public class RouteController {
         route.setStartCoordinate(request.getStartCoordinate());
         route.setEndCoordinate(request.getEndCoordinate());
         return routeService.calculateRoute(route);
+    }
+
+    @Operation(
+        summary = "Calculate eco-friendly route",
+        description = "Calculates both eco-friendly and shortest routes between two points"
+    )
+    @ApiResponse(responseCode = "200", description = "Route calculation successful")
+    @PostMapping("/calculate-eco-route")
+    public ResponseEntity<String> calculateEcoRoute(@RequestBody String requestBody) {
+        // Forward the request to the Python service
+        String pythonServiceUrl = "http://localhost:5000/api/calculate-eco-route";
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        
+        HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
+        
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response = restTemplate.postForEntity(
+            pythonServiceUrl,
+            requestEntity,
+            String.class
+        );
+        
+        return ResponseEntity.ok(response.getBody());
     }
 }

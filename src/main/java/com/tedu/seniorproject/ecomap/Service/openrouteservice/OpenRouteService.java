@@ -16,7 +16,7 @@ public class OpenRouteService {
         String url = baseUrl + "/geocode/search?text=" + text;
 
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", apiKey);
+        headers.set("Authorization", "Bearer " + apiKey);
         headers.setAccept(MediaType.parseMediaTypes("application/json"));
 
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
@@ -35,7 +35,7 @@ public class OpenRouteService {
         String url = baseUrl + "/v2/directions/driving-car";
 
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", apiKey);
+        headers.set("Authorization", "Bearer " + apiKey);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<String> requestEntity = new HttpEntity<>(jsonBody, headers);
