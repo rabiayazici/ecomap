@@ -1,8 +1,8 @@
-package com.tedu.seniorproject.ecomap.controller;
+package com.tedu.seniorproject.ecomap.Controller;
 
 import com.tedu.seniorproject.ecomap.dto.RouteCalculationRequest;
 import com.tedu.seniorproject.ecomap.dto.RouteCalculationResponse;
-import com.tedu.seniorproject.ecomap.service.SatelliteRouteService;
+import com.tedu.seniorproject.ecomap.Service.SatelliteRouteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

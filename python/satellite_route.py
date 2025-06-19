@@ -63,35 +63,33 @@ def np_to_png_data_uri(arr: np.ndarray) -> str:
 
 def process_image(img_arr: np.ndarray) -> np.ndarray:
     try:
+        print(f"[DEBUG] process_image received shape: {img_arr.shape}")
         h, w = img_arr.shape[:2]
-        ph, pw = ((h + 31) // 32) * 32, ((w + 31) // 32) * 32
+        print(f"[DEBUG] h: {h}, w: {w}")
+        ph, pw = 1024, 1024
+        print(f"[DEBUG] Padding to: ({ph}, {pw})")
         padded = cv2.copyMakeBorder(img_arr, 0, ph - h, 0, pw - w, cv2.BORDER_CONSTANT)
-        
-        # Process in smaller chunks if needed
-        if ph * pw > 1000000:  # If image is too large
-            scale = np.sqrt(1000000 / (ph * pw))
-            new_size = (int(pw * scale), int(ph * scale))
-            padded = cv2.resize(padded, new_size)
-            
+        print(f"[DEBUG] process_image after padding: {padded.shape}")
         ten = transforms.ToTensor()(padded).unsqueeze(0)
-        
+        print(f"[DEBUG] Tensor shape before model: {ten.shape}")
         # Move to appropriate device
         if torch.cuda.is_available():
+            print("[DEBUG] Using CUDA")
             ten = ten.cuda()
             torch.cuda.empty_cache()
-        
+        else:
+            print("[DEBUG] Using CPU")
         with torch.no_grad():
+            print("[DEBUG] Calling model...")
             prob = torch.sigmoid(model(ten))[0, 0].cpu().numpy()
-            
-        # Clean up GPU memory
+            print(f"[DEBUG] Model output shape: {prob.shape}")
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-        
-        # Resize back if we scaled down
         if ph * pw > 1000000:
             prob = cv2.resize(prob, (pw, ph))
-        
+            print(f"[DEBUG] Resized prob shape: {prob.shape}")
         mask = (prob > 0.5).astype(np.uint8)[:h, :w]
+        print(f"[DEBUG] Final mask shape: {mask.shape}")
         return mask
     except Exception as e:
         print(f"Error in process_image: {e}")
@@ -157,40 +155,49 @@ def convert_tiff():
 @app.route("/api/calculate-route", methods=["POST"])
 def calculate_route():
     try:
+        print("[DEBUG] Received request at /api/calculate-route")
         data = request.get_json()
+        print(f"[DEBUG] data keys: {list(data.keys())}")
         img_b64 = data["image"].split(",")[1]
+        print(f"[DEBUG] Decoded base64 image, length: {len(img_b64)}")
         img_bytes = base64.b64decode(img_b64)
+        print(f"[DEBUG] Decoded image bytes, length: {len(img_bytes)}")
         img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        print(f"[DEBUG] PIL image loaded, size: {img.size}")
+        img = img.resize((1024, 1024), Image.LANCZOS)
+        print(f"[DEBUG] PIL image resized to: {img.size}")
         img_arr = np.array(img)
-        
-        # Clean up memory
+        print(f"[DEBUG] Numpy array shape: {img_arr.shape}")
         del img
         gc.collect()
-
+        print("[DEBUG] Calling process_image...")
         mask = process_image(img_arr)
+        print(f"[DEBUG] Mask shape: {mask.shape}")
+        print("[DEBUG] Calling create_graph...")
         G = create_graph(mask)
-
+        print(f"[DEBUG] Graph created with {len(G.nodes())} nodes and {len(G.edges())} edges")
         start = (int(data["start"]["x"]), int(data["start"]["y"]))
         end = (int(data["end"]["x"]), int(data["end"]["y"]))
-
+        print(f"[DEBUG] Start: {start}, End: {end}")
         p_start = closest(G, start)
+        print(f"[DEBUG] Closest start: {p_start}")
         p_end = closest(G, end)
-
+        print(f"[DEBUG] Closest end: {p_end}")
         path = nx.shortest_path(G, p_start, p_end, weight="weight")
+        print(f"[DEBUG] Path length: {len(path)}")
         path_coords = [{"x": int(x), "y": int(y)} for x, y in path]
         dist = sum(
             np.hypot(path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1])
             for i in range(len(path) - 1)
         )
-
-        # Clean up memory
+        print(f"[DEBUG] Distance: {dist}")
         del G, mask
         gc.collect()
-
+        print("[DEBUG] Returning response")
         return jsonify({"path": path_coords, "distance": dist, "displayImage": data["image"]})
     except Exception as e:
         print(f"Error in calculate_route: {e}")
         return jsonify({"error": str(e)}), 400
 
 if __name__ == "__main__":
-    app.run(port=5000)
+    app.run(port=8080)

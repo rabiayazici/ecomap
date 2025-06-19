@@ -1,4 +1,4 @@
-package com.tedu.seniorproject.ecomap.service;
+package com.tedu.seniorproject.ecomap.Service;
 
 import com.tedu.seniorproject.ecomap.dto.RouteCalculationRequest;
 import com.tedu.seniorproject.ecomap.dto.RouteCalculationResponse;
@@ -11,7 +11,6 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import java.util.Map;
-import java.util.Base64;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

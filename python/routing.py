@@ -5,6 +5,7 @@ import networkx as nx
 import logging
 import math
 from datetime import datetime
+from geopy.distance import great_circle
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +88,7 @@ def generate_graph(start_lat, start_lon, end_lat, end_lon, network_type="drive")
     try:
         center_lat = float((start_lat + end_lat) / 2)
         center_lon = float((start_lon + end_lon) / 2)
-        distance = ox.distance.great_circle(start_lat, start_lon, end_lat, end_lon)
+        distance = great_circle((start_lat, start_lon), (end_lat, end_lon)).meters
         radius = max(1500, distance * 1.5)
         
         logger.debug(f"Generating graph centered at ({center_lat}, {center_lon}) with radius {radius}m")
@@ -105,7 +106,7 @@ def generate_graph(start_lat, start_lon, end_lat, end_lon, network_type="drive")
             if 'length' not in data:
                 u_coords = (G.nodes[u]['y'], G.nodes[u]['x'])
                 v_coords = (G.nodes[v]['y'], G.nodes[v]['x'])
-                data['length'] = ox.distance.great_circle(u_coords[0], u_coords[1], v_coords[0], v_coords[1])
+                data['length'] = great_circle(u_coords, v_coords).meters
                 logger.debug(f"Calculated length for edge {u}->{v}: {data['length']:.2f}m")
             
             # Calculate slope
@@ -267,7 +268,7 @@ def find_shortest_and_eco_route(G, start_node, end_node, vehicle_params):
                 edges_without_length += 1
                 u_coords = (G.nodes[u]['y'], G.nodes[u]['x'])
                 v_coords = (G.nodes[v]['y'], G.nodes[v]['x'])
-                data['length'] = ox.distance.great_circle(u_coords[0], u_coords[1], v_coords[0], v_coords[1])
+                data['length'] = great_circle(u_coords, v_coords).meters
                 logger.info(f"Edge {u}->{v} had no length, calculated: {data['length']:.2f}m")
         
         logger.info(f"Found {edges_without_length} edges without length data")

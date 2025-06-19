@@ -1,4 +1,4 @@
-package com.tedu.seniorproject.ecomap.service;
+package com.tedu.seniorproject.ecomap.Service;
 
 import org.springframework.stereotype.Service;
 import java.io.BufferedReader;

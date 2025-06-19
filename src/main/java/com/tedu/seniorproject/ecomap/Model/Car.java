@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,36 +26,15 @@ public class Car {
     
     @NotBlank
     @Column(nullable = false)
-    private String model;
+    private String vehicle_type; // A, B, C, D, E, F, S, J, M
     
     @NotBlank
     @Column(nullable = false)
-    private String engine_type;
+    private String fuel_type; // diesel, electric, hybrid, petrol, plugin hybrid
     
     @NotNull
     @Column(nullable = false)
     private int year;
-    
-    @NotBlank
-    @Column(nullable = false)
-    private String fuel_type;
-    
-    @NotNull
-    @Column(nullable = false)
-    private double engine_displacement;
-    
-    @NotBlank
-    @Column(nullable = false)
-    private String transmission;
-    
-    @NotBlank
-    @Column(nullable = false)
-    private String drive_type;
-    
-    @NotNull
-    @Positive
-    @Column(nullable = false)
-    private double fuelConsumption;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

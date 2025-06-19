@@ -47,8 +47,9 @@ public class CarService {
         return carRepository.findById(id)
                 .map(existingCar -> {
                     existingCar.setName(car.getName());
-                    existingCar.setModel(car.getModel());
-                    existingCar.setFuelConsumption(car.getFuelConsumption());
+                    existingCar.setVehicle_type(car.getVehicle_type());
+                    existingCar.setFuel_type(car.getFuel_type());
+                    existingCar.setYear(car.getYear());
                     return ResponseEntity.ok(carRepository.save(existingCar));
                 })
                 .orElse(ResponseEntity.notFound().build());
